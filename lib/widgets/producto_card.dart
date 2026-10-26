@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../screens/producto_detalle_screen.dart';
+import '../screens/producto_detalle_screen.dart';
 
 /// Datos de ejemplo (solo para maquetar, sin backend).
 class Producto {

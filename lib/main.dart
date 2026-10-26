@@ -1,6 +1,5 @@
-
 import 'package:flutter/material.dart';
-import 'main_shell.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +19,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const MainShell(),
+      home: const SplashScreen(),
     );
   }
 }
