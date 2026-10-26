@@ -59,36 +59,47 @@ Nota: también se puede ejecutar en el navegador si el proyecto tiene habilitada
 
 ## 6. Screenshots
 ### Splashscreen
-<img width="1285" height="1100" alt="Splashscreen" src="https://github.com/user-attachments/assets/57f33c20-00fb-4511-ac9f-ded9ba4a1af5" />
+
+![Splashscreen](screenshots/01-Splashscreen.png)
 
 ### Autenticación
-<img width="1287" height="1087" alt="Login" src="https://github.com/user-attachments/assets/0b644997-70ab-4809-ba68-bac48f732f45" />
-<img width="1287" height="1092" alt="Login(validacion)" src="https://github.com/user-attachments/assets/849a944e-a6bd-4dcb-abe5-99c6379cec20" />
+![Login](screenshots/02-Login.png)
+
+![Login con validación](screenshots/03-Login%28validacion%29.png)
 
 ### Dashboards
-<img width="1291" height="1097" alt="Dashboard" src="https://github.com/user-attachments/assets/81291780-e880-4bda-9323-4fba6a2a02b9" />
-<img width="1287" height="1105" alt="Dashboard-usuario" src="https://github.com/user-attachments/assets/c64f0e0d-93cb-4375-a535-576109eb4eea" />
-<img width="1291" height="1092" alt="Dashboard-organizacion" src="https://github.com/user-attachments/assets/87225686-3ca1-4b66-a7ca-ad7d51ee0854" />
-<img width="1287" height="1091" alt="Dashboard-administrador" src="https://github.com/user-attachments/assets/78fa1630-e1b4-495f-9bcb-6329153d2333" />
+![Dashboard](screenshots/04-Dashboard.png)
+
+![Dashboard de usuario](screenshots/05-Dashboard-usuario.png)
+
+![Dashboard de organización](screenshots/06-Dashboard-organizacion.png)
+
+![Dashboard de administrador](screenshots/07-Dashboard-administrador.png)
 
 ### Listas
-<img width="1282" height="1090" alt="Lista-principal" src="https://github.com/user-attachments/assets/3374b7bc-ad28-4bfc-9505-f40aed830534" />
-<img width="1291" height="1101" alt="Lista-detalle" src="https://github.com/user-attachments/assets/0b2fd14b-fbe7-401a-a836-d6ffcf831894" />
-<img width="1282" height="1092" alt="Lista-vacia" src="https://github.com/user-attachments/assets/899575db-0034-4297-b169-7e49c7d30b67" />
+![Lista principal](screenshots/08-Lista-principal.png)
+
+![Lista de detalle](screenshots/09-Lista-detalle.png)
+
+![Lista vacía](screenshots/10-Lista-vacia.png)
 
 ### Formularios
-<img width="1287" height="1106" alt="Formulario" src="https://github.com/user-attachments/assets/49c3d917-9683-4d38-80f6-de923162c52c" />
-<img width="1282" height="1087" alt="Formulario-datos" src="https://github.com/user-attachments/assets/cc44ac6e-df84-4ba5-a04f-adc87540791f" />
-<img width="1280" height="1102" alt="Formulario-precio" src="https://github.com/user-attachments/assets/424aa040-4dea-463e-aaaa-44599ac834ab" />
+![Formulario](screenshots/11-Formulario.png)
+
+![Formulario con datos](screenshots/12-Formulario-datos.png)
+
+![Formulario de precio](screenshots/13-Formulario-precio.png)
 
 ### Evidencia funcional
-<img width="1600" height="1200" alt="Foto-equipo" src="https://github.com/user-attachments/assets/67988e54-bcd7-4213-8e95-559b00acbbf9" />
+![Foto del equipo](screenshots/14-Foto-equipo.jpeg)
 
+### Navegación
+![Navegación: inicio de sesión](screenshots/15-Navegacion%28iniciosesion%29.png)
 
+![Navegación: dashboard](screenshots/16-Navegacion%28bashboard%29.png)
 
+![Navegación: búsqueda](screenshots/17-Navegacion%28buscar%29.png)
 
+![Navegación: detalle](screenshots/18-Navegacion%28detalle%29.png)
 
-
-
-
-
+![Navegación: publicación](screenshots/19-Navegacion%28publicacion%29.png)
