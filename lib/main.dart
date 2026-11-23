@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+
 import 'screens/splash_screen.dart';
 
 void main() {
@@ -74,18 +74,9 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
-          bodyLarge: TextStyle(
-            fontSize: 14,
-            color: AppColors.textPrimary,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-          ),
-          labelMedium: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+          bodyLarge: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
 
         inputDecorationTheme: InputDecorationTheme(
@@ -97,22 +88,15 @@ class MyApp extends StatelessWidget {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: AppColors.border,
-            ),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: AppColors.border,
-            ),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: AppColors.primary,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
           ),
         ),
 
@@ -136,9 +120,7 @@ class MyApp extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(
-              color: AppColors.border,
-            ),
+            side: const BorderSide(color: AppColors.border),
           ),
         ),
       ),
