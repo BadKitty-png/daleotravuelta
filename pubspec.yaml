@@ -37,6 +37,7 @@ dependencies:
   google_fonts: ^9.0.0
   sqflite: ^2.4.6
   path: ^1.9.1
+  cryptography: ^2.9.0
 
 dev_dependencies:
   flutter_test:

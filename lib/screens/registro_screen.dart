@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/usuario_service.dart'; //Import para base de datos
+
 import '../models/sesion.dart';
 import 'dashboard_router.dart';
 import 'login_screen.dart' show municipiosGto;
@@ -25,6 +27,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   bool _errorTerminos = false;
   bool _ocultarPassword = true;
   bool _ocultarConfirmar = true;
+  bool _guardando = false; //NUeva funcion version prueba
 
   static const Color verde = Color(0xFF3D7050);
   static const Color verdeClaro = Color(0xFF4F8A65);
@@ -45,7 +48,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
     super.dispose();
   }
 
-  void _crear() {
+  Future<void> _crear() async {
+    if (_guardando) return;
+
     final ok = _formKey.currentState!.validate();
 
     setState(() {
@@ -54,15 +59,58 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
     if (!ok || !_terminos) return;
 
-    Sesion.nombre = _nombre.text.trim();
-    Sesion.correo = _correo.text.trim();
-    Sesion.municipio = _municipio!;
-    Sesion.rol = _rol;
+    setState(() {
+      _guardando = true;
+    });
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const DashboardRouter()),
-      (r) => false,
-    );
+    try {
+      // Registrar cuenta en SQLite
+      await UsuarioService.instance.registrarUsuario(
+        nombre: _nombre.text.trim(),
+        correo: _correo.text.trim(),
+        password: _password.text,
+        municipio: _municipio!,
+        rol: _rol.name,
+      );
+
+      // Iniciar sesión automáticamente
+      await UsuarioService.instance.iniciarSesion(
+        correo: _correo.text.trim(),
+        password: _password.text,
+      );
+
+      if (!mounted) return;
+
+      // Actualizar los datos de la sesión en memoria
+      Sesion.nombre = _nombre.text.trim();
+      Sesion.correo = _correo.text.trim().toLowerCase();
+      Sesion.municipio = _municipio!;
+      Sesion.rol = _rol;
+
+      // Ir al panel correspondiente
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DashboardRouter()),
+        (r) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e.toString().replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _guardando = false;
+        });
+      }
+    }
   }
 
   @override
@@ -284,7 +332,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               style: estilo.copyWith(fontSize: 13, color: texto),
               decoration: _decoracion(
                 Icons.lock_outline,
-                'Mínimo 6 caracteres',
+                'Mínimo 8 caracteres',
                 suffix: IconButton(
                   onPressed: () {
                     setState(() {
@@ -304,7 +352,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 if (v == null || v.isEmpty) {
                   return 'Escribe una contraseña';
                 }
-                if (v.length < 6) return 'Mínimo 6 caracteres';
+                if (v.length < 8) return 'Mínimo 8 caracteres';
                 return null;
               },
             ),
@@ -378,7 +426,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ),
             const SizedBox(height: 13),
 
-            ...RolUsuario.values.map(_construirRol),
+            ...[RolUsuario.usuario, RolUsuario.organizacion].map(_construirRol),
 
             const SizedBox(height: 15),
 
@@ -586,20 +634,40 @@ class _RegistroScreenState extends State<RegistroScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: _crear,
+          onTap: _guardando ? null : _crear,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Crear cuenta',
-                style: estilo.copyWith(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              if (_guardando) ...[
+                const SizedBox(
+                  width: 19,
+                  height: 19,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(
+                  'Guardando cuenta...',
+                  style: estilo.copyWith(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'Crear cuenta',
+                  style: estilo.copyWith(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+              ],
             ],
           ),
         ),
