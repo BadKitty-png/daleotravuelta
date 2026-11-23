@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Pantalla 3 (parte 2) — Precio y ubicación
+import '../widgets/estilo_app.dart';
+
+/// Pantalla 3 (parte 2) — Precio y ubicación.
 class PublicarPrecioScreen extends StatefulWidget {
   const PublicarPrecioScreen({super.key});
 
@@ -11,52 +13,356 @@ class PublicarPrecioScreen extends StatefulWidget {
 class _PublicarPrecioScreenState extends State<PublicarPrecioScreen> {
   bool _acepto = false;
 
+  final List<String> _colonias = [
+    'Col. Centro',
+    'Col. San Juan',
+    'Col. Las Américas',
+  ];
+
+  String _colonia = 'Col. Centro';
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Publicar')),
+      backgroundColor: DaleColores.crema,
+      appBar: AppBar(
+        backgroundColor: DaleColores.crema,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Precio y ubicación',
+          style: TextStyle(
+            color: DaleColores.carbon,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Roboto',
+          ),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          Text('Precio y Ubicación', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          const TextField(
+          _encabezado(),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Últimos detalles',
+            style: TextStyle(
+              color: DaleColores.carbon,
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Roboto',
+            ),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'Indica el precio y dónde pueden encontrar tu objeto.',
+            style: TextStyle(
+              color: DaleColores.grisMusgo,
+              fontSize: 13,
+              fontFamily: 'Roboto',
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            'Precio del producto',
+            style: TextStyle(
+              color: DaleColores.carbon,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Roboto',
+            ),
+          ),
+          const SizedBox(height: 9),
+
+          TextField(
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Precio', prefixText: '\$ '),
+            decoration: InputDecoration(
+              labelText: 'Precio',
+              prefixText: '\$ ',
+              prefixStyle: const TextStyle(
+                color: DaleColores.verdeBosque,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: DaleColores.borde),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: DaleColores.borde),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: DaleColores.verdeBosque,
+                  width: 1.5,
+                ),
+              ),
+            ),
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Acepto ofertas'),
-            value: _acepto,
-            onChanged: (v) => setState(() => _acepto = v),
+
+          const SizedBox(height: 12),
+
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: DaleColores.borde),
+            ),
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              title: const Text(
+                'Acepto ofertas',
+                style: TextStyle(
+                  color: DaleColores.carbon,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+              subtitle: const Text(
+                'Permite que otras personas te propongan un precio.',
+                style: TextStyle(
+                  color: DaleColores.grisMusgo,
+                  fontSize: 11,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+              secondary: const Icon(
+                Icons.handshake_outlined,
+                color: DaleColores.verdeBosque,
+              ),
+              activeThumbColor: DaleColores.verdeBosque,
+              value: _acepto,
+              onChanged: (v) => setState(() => _acepto = v),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text('¿Dónde está?', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Ubicación del objeto',
+            style: TextStyle(
+              color: DaleColores.carbon,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Roboto',
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Selecciona la zona donde se encuentra.',
+            style: TextStyle(
+              color: DaleColores.grisMusgo,
+              fontSize: 12,
+              fontFamily: 'Roboto',
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           Container(
             height: 180,
-            color: cs.surfaceContainerHighest,
-            child: const Center(child: Icon(Icons.map_outlined, size: 48)),
+            decoration: BoxDecoration(
+              color: DaleColores.verdeLima.withOpacity(0.22),
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(color: DaleColores.borde),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  top: 12,
+                  right: 16,
+                  child: Icon(
+                    Icons.eco_outlined,
+                    size: 42,
+                    color: DaleColores.verdeBosque.withOpacity(0.25),
+                  ),
+                ),
+                Positioned(
+                  bottom: 12,
+                  left: 16,
+                  child: Icon(
+                    Icons.autorenew_rounded,
+                    size: 35,
+                    color: DaleColores.verdeBosque.withOpacity(0.25),
+                  ),
+                ),
+                const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      color: DaleColores.verdeBosque,
+                      size: 48,
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Ubicación aproximada',
+                      style: TextStyle(
+                        color: DaleColores.verdeBosque,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Roboto',
+                      ),
+                    ),
+                    Text(
+                      'Vista previa del mapa',
+                      style: TextStyle(
+                        color: DaleColores.grisMusgo,
+                        fontSize: 11,
+                        fontFamily: 'Roboto',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 14),
+
           DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Colonia'),
-            initialValue: 'Col. Centro',
-            items: const ['Col. Centro', 'Col. San Juan', 'Col. Las Américas']
+            initialValue: _colonia,
+            decoration: InputDecoration(
+              labelText: 'Colonia',
+              prefixIcon: const Icon(
+                Icons.location_city_outlined,
+                color: DaleColores.verdeBosque,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: DaleColores.borde),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: DaleColores.borde),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: DaleColores.verdeBosque,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            items: _colonias
                 .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                 .toList(),
-            onChanged: (_) {},
-          ),
-          const SizedBox(height: 32),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).popUntil((r) => r.isFirst);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Publicación simulada (sin funcionalidad aún)')),
-              );
+            onChanged: (valor) {
+              if (valor != null) {
+                setState(() => _colonia = valor);
+              }
             },
-            child: const Text('Publicar'),
+          ),
+
+          const SizedBox(height: 30),
+
+          SizedBox(
+            height: 52,
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).popUntil((r) => r.isFirst);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Publicación simulada (sin funcionalidad aún)',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.eco_rounded),
+              label: const Text(
+                'Publicar objeto',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  fontFamily: 'Roboto',
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DaleColores.verdeBosque,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          const Center(
+            child: Text(
+              'Dale una segunda oportunidad a tus objetos 🌱',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: DaleColores.grisMusgo,
+                fontSize: 11,
+                fontFamily: 'Roboto',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _encabezado() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [DaleColores.verdeBosque, DaleColores.verdeClaro],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Stack(
+        children: [
+          const Positioned.fill(child: DecoracionOrganica()),
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Ya casi terminas!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Roboto',
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Completa la información para compartir tu publicación.',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.4,
+                        fontFamily: 'Roboto',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const LogoDaleVuelta(size: 62),
+            ],
           ),
         ],
       ),
