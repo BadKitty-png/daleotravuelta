@@ -51,12 +51,54 @@ class _LoginScreenState extends State<LoginScreen> {
   void _entrar() {
     if (!_formKey.currentState!.validate()) return;
 
-    Sesion.correo = _correo.text.trim();
-    Sesion.municipio = _municipio!;
+    // ACCESO DE ADMINISTRADOR PARA DEMOSTRACIÓN
+    if (_correo.text.trim().toLowerCase() == 'admin@dalelavuelta.com' &&
+        _password.text == 'Admin12345') {
+      Sesion.nombre = 'Administrador';
+      Sesion.correo = 'admin@dalelavuelta.com';
+      Sesion.municipio = 'Dolores Hidalgo';
+      Sesion.rol = RolUsuario.administrador;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const DashboardRouter()),
-    );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardRouter()),
+      );
+
+      return;
+    }
+
+    // INICIO DE SESIÓN NORMAL
+    _iniciarSesionNormal();
+  }
+
+  Future<void> _iniciarSesionNormal() async {
+    try {
+      final usuario = await UsuarioService.instance.iniciarSesion(
+        correo: _correo.text.trim(),
+        password: _password.text,
+      );
+
+      Sesion.nombre = usuario['nombre'] as String;
+      Sesion.correo = usuario['correo'] as String;
+      Sesion.municipio = usuario['municipio'] as String;
+      Sesion.rol = RolUsuario.values.firstWhere(
+        (rol) => rol.name == usuario['rol'],
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardRouter()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
