@@ -1,4 +1,3 @@
-/// Tipos de usuario de la app.
 enum RolUsuario { usuario, organizacion, administrador }
 
 extension RolUsuarioX on RolUsuario {
@@ -25,8 +24,9 @@ extension RolUsuarioX on RolUsuario {
   }
 }
 
-/// Sesión de ejemplo (solo maquetado, sin backend).
 class Sesion {
+  static int? usuarioId;
+
   static String nombre = 'Nombre de usuario';
   static String correo = '';
   static String municipio = 'Dolores Hidalgo';

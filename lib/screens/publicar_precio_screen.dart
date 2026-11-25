@@ -2,9 +2,39 @@ import 'package:flutter/material.dart';
 
 import '../widgets/estilo_app.dart';
 
+import '../models/sesion.dart';
+import '../services/publicacion_service.dart'; //Importaciones sobre los nuuevos modulos, migracion de
+
+//publicaciones a la base de datos
+
 /// Pantalla 3 (parte 2) — Precio y ubicación.
 class PublicarPrecioScreen extends StatefulWidget {
-  const PublicarPrecioScreen({super.key});
+  final String categoria;
+  final String modalidad;
+  final String titulo;
+  final String marca;
+  final String modelo;
+  final int? anio;
+  final String? talla;
+  final String estadoProducto;
+  final String descripcion;
+  final String numeroSerie;
+  final String caracteristicas;
+
+  const PublicarPrecioScreen({
+    super.key,
+    required this.categoria,
+    required this.modalidad,
+    required this.titulo,
+    required this.marca,
+    required this.modelo,
+    required this.anio,
+    required this.talla,
+    required this.estadoProducto,
+    required this.descripcion,
+    required this.numeroSerie,
+    required this.caracteristicas,
+  });
 
   @override
   State<PublicarPrecioScreen> createState() => _PublicarPrecioScreenState();
@@ -21,6 +51,97 @@ class _PublicarPrecioScreenState extends State<PublicarPrecioScreen> {
 
   String _colonia = 'Col. Centro';
 
+  final TextEditingController _precioController = TextEditingController();
+  //--------------------------
+  bool _guardando = false;
+
+  @override //Cambios a base de datos guardado
+  void dispose() {
+    _precioController.dispose();
+    super.dispose();
+  }
+
+  //--------------------------------
+  Future<void> _guardarPublicacion() async {
+    if (_guardando) return;
+
+    final usuarioId = Sesion.usuarioId;
+
+    if (usuarioId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Debes iniciar sesión con una cuenta de usuario para publicar.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    double precio = 0;
+
+    if (widget.modalidad == 'Vender') {
+      precio =
+          double.tryParse(_precioController.text.trim().replaceAll(',', '.')) ??
+          0;
+
+      if (precio <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ingresa un precio válido mayor que cero.'),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _guardando = true);
+
+    try {
+      await PublicacionService.instance.guardarPublicacion(
+        usuarioId: usuarioId,
+        categoria: widget.categoria,
+        modalidad: widget.modalidad,
+        titulo: widget.titulo,
+        marca: widget.marca.isEmpty ? null : widget.marca,
+        modelo: widget.modelo.isEmpty ? null : widget.modelo,
+        anio: widget.anio,
+        talla: widget.talla,
+        estadoProducto: widget.estadoProducto,
+        descripcion: widget.descripcion,
+        numeroSerie: widget.numeroSerie.isEmpty ? null : widget.numeroSerie,
+        caracteristicas: widget.caracteristicas.isEmpty
+            ? null
+            : widget.caracteristicas,
+        aceptaOfertas: widget.modalidad == 'Vender' && _acepto,
+        precio: precio,
+        colonia: _colonia,
+        municipio: Sesion.municipio,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Tu publicación se guardó correctamente!'),
+        ),
+      );
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo guardar la publicación: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _guardando = false);
+      }
+    }
+  }
+
+  //----------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +199,8 @@ class _PublicarPrecioScreenState extends State<PublicarPrecioScreen> {
           const SizedBox(height: 9),
 
           TextField(
-            keyboardType: TextInputType.number,
+            controller: _precioController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: 'Precio',
               prefixText: '\$ ',
@@ -270,20 +392,11 @@ class _PublicarPrecioScreenState extends State<PublicarPrecioScreen> {
             height: 52,
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).popUntil((r) => r.isFirst);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Publicación simulada (sin funcionalidad aún)',
-                    ),
-                  ),
-                );
-              },
+              onPressed: _guardando ? null : _guardarPublicacion,
               icon: const Icon(Icons.eco_rounded),
-              label: const Text(
-                'Publicar objeto',
-                style: TextStyle(
+              label: Text(
+                _guardando ? 'Guardando...' : 'Publicar objeto',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                   fontFamily: 'Roboto',

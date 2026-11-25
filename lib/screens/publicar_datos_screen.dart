@@ -21,6 +21,26 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
   String _talla = 'M';
   String _estado = 'Buen estado';
 
+  final _tituloController = TextEditingController();
+  final _marcaController = TextEditingController();
+  final _modeloController = TextEditingController();
+  final _anioController = TextEditingController();
+  final _caracteristicasController = TextEditingController();
+  final _descripcionController = TextEditingController();
+  final _numeroSerieController = TextEditingController();
+
+  @override
+  void dispose() {
+    _tituloController.dispose();
+    _marcaController.dispose();
+    _modeloController.dispose();
+    _anioController.dispose();
+    _caracteristicasController.dispose();
+    _descripcionController.dispose();
+    _numeroSerieController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final campos = _obtenerCampos();
@@ -44,7 +64,6 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _encabezado(),
-
           const SizedBox(height: 24),
 
           const Text(
@@ -70,11 +89,11 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
 
           const SizedBox(height: 20),
 
-          // Campos dinámicos.
           for (final campo in campos) ...[
             _campo(
               etiqueta: campo['nombre']!,
               icono: campo['icono']!,
+              controller: _obtenerControlador(campo['icono']!),
               tipo: campo['tipo'] == 'numero'
                   ? TextInputType.number
                   : TextInputType.text,
@@ -82,7 +101,6 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
             const SizedBox(height: 14),
           ],
 
-          // La talla solamente corresponde a bicicletas.
           if (widget.categoria == 'Bicicletas') ...[
             const Text(
               'Talla de la bicicleta',
@@ -93,7 +111,6 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
                 fontFamily: 'Roboto',
               ),
             ),
-
             const SizedBox(height: 10),
 
             SegmentedButton<String>(
@@ -180,6 +197,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
           const SizedBox(height: 9),
 
           TextField(
+            controller: _descripcionController,
             maxLines: 4,
             decoration: _decoracion(
               'Describe las características de tu objeto',
@@ -189,20 +207,18 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
 
           const SizedBox(height: 16),
 
-          _campo(etiqueta: 'Número de serie (opcional)', icono: 'serial'),
+          _campo(
+            etiqueta: 'Número de serie (opcional)',
+            icono: 'serial',
+            controller: _numeroSerieController,
+          ),
 
           const SizedBox(height: 30),
 
           SizedBox(
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PublicarPrecioScreen(),
-                  ),
-                );
-              },
+              onPressed: _continuar,
               icon: const Icon(Icons.arrow_forward_rounded),
               label: const Text(
                 'Siguiente',
@@ -227,8 +243,57 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
     );
   }
 
-  // Bicicletas conserva sus campos particulares.
-  // Las demás categorías utilizan un formulario genérico.
+  void _continuar() {
+    final descripcion = _descripcionController.text.trim();
+
+    if (widget.categoria != 'Bicicletas' &&
+        _tituloController.text.trim().isEmpty) {
+      _mostrarMensaje('Escribe el nombre del producto.');
+      return;
+    }
+
+    if (descripcion.isEmpty) {
+      _mostrarMensaje('Escribe una descripción del producto.');
+      return;
+    }
+
+    final titulo = widget.categoria == 'Bicicletas'
+        ? 'Bicicleta ${_marcaController.text.trim()} ${_modeloController.text.trim()}'
+              .trim()
+        : _tituloController.text.trim();
+
+    final anioTexto = _anioController.text.trim();
+    final anio = int.tryParse(anioTexto);
+
+    if (anioTexto.isNotEmpty && anio == null) {
+      _mostrarMensaje('El año debe ser un número válido.');
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PublicarPrecioScreen(
+          categoria: widget.categoria,
+          modalidad: widget.modalidad,
+          titulo: titulo,
+          marca: _marcaController.text.trim(),
+          modelo: _modeloController.text.trim(),
+          anio: anio,
+          talla: widget.categoria == 'Bicicletas' ? _talla : null,
+          estadoProducto: _estado,
+          descripcion: descripcion,
+          numeroSerie: _numeroSerieController.text.trim(),
+          caracteristicas: _caracteristicasController.text.trim(),
+        ),
+      ),
+    );
+  }
+
+  void _mostrarMensaje(String mensaje) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
   List<Map<String, String>> _obtenerCampos() {
     if (widget.categoria == 'Bicicletas') {
       return [
@@ -249,6 +314,23 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
     ];
   }
 
+  TextEditingController _obtenerControlador(String icono) {
+    switch (icono) {
+      case 'marca':
+        return _marcaController;
+      case 'calendar':
+        return _anioController;
+      case 'model':
+        return _modeloController;
+      case 'producto':
+        return _tituloController;
+      case 'caracteristicas':
+        return _caracteristicasController;
+      default:
+        return _tituloController;
+    }
+  }
+
   Widget _encabezado() {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -263,7 +345,6 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
       child: Stack(
         children: [
           const Positioned.fill(child: DecoracionOrganica()),
-
           Row(
             children: [
               Expanded(
@@ -279,9 +360,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
                         fontFamily: 'Roboto',
                       ),
                     ),
-
                     const SizedBox(height: 5),
-
                     Text(
                       '${widget.categoria} · ${widget.modalidad}',
                       style: const TextStyle(
@@ -290,9 +369,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
                         fontFamily: 'Roboto',
                       ),
                     ),
-
                     const SizedBox(height: 5),
-
                     const Text(
                       'Completa la información de tu publicación.',
                       style: TextStyle(
@@ -305,9 +382,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
-
               const LogoDaleVuelta(size: 62),
             ],
           ),
@@ -343,6 +418,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
   Widget _campo({
     required String etiqueta,
     required String icono,
+    required TextEditingController controller,
     TextInputType tipo = TextInputType.text,
   }) {
     final iconos = <String, IconData>{
@@ -355,6 +431,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
     };
 
     return TextField(
+      controller: controller,
       keyboardType: tipo,
       decoration: _decoracion(
         etiqueta,

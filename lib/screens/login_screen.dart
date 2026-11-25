@@ -54,6 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // ACCESO DE ADMINISTRADOR PARA DEMOSTRACIÓN
     if (_correo.text.trim().toLowerCase() == 'admin@dalelavuelta.com' &&
         _password.text == 'Admin12345') {
+      Sesion.usuarioId = null;
       Sesion.nombre = 'Administrador';
       Sesion.correo = 'admin@dalelavuelta.com';
       Sesion.municipio = 'Dolores Hidalgo';
@@ -66,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // INICIO DE SESIÓN NORMAL
     _iniciarSesionNormal();
   }
 
@@ -77,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _password.text,
       );
 
+      Sesion.usuarioId = (usuario['id'] as num).toInt();
       Sesion.nombre = usuario['nombre'] as String;
       Sesion.correo = usuario['correo'] as String;
       Sesion.municipio = usuario['municipio'] as String;

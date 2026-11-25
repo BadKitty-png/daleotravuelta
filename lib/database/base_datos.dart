@@ -24,11 +24,22 @@ class BaseDatos {
 
     return await openDatabase(
       pathDB,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _crearTablas,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            'ALTER TABLE publicaciones ADD COLUMN caracteristicas TEXT',
+          );
+
+          await db.execute(
+            'ALTER TABLE publicaciones ADD COLUMN acepta_ofertas INTEGER NOT NULL DEFAULT 0',
+          );
+        }
+      },
     );
   }
 
@@ -63,6 +74,8 @@ class BaseDatos {
         estado_producto TEXT NOT NULL,
         descripcion TEXT NOT NULL,
         numero_serie TEXT,
+        caracteristicas TEXT,
+        acepta_ofertas INTEGER NOT NULL DEFAULT 0,
         precio REAL NOT NULL DEFAULT 0,
         colonia TEXT,
         municipio TEXT NOT NULL,
