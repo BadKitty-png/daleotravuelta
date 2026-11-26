@@ -24,20 +24,28 @@ class BaseDatos {
 
     return await openDatabase(
       pathDB,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _crearTablas,
       onUpgrade: (db, oldVersion, newVersion) async {
+        // Migración de versión 1 a versión 2.
         if (oldVersion < 2) {
           await db.execute(
-            'ALTER TABLE publicaciones ADD COLUMN caracteristicas TEXT',
+            'ALTER TABLE publicaciones '
+            'ADD COLUMN caracteristicas TEXT',
           );
 
           await db.execute(
-            'ALTER TABLE publicaciones ADD COLUMN acepta_ofertas INTEGER NOT NULL DEFAULT 0',
+            'ALTER TABLE publicaciones '
+            'ADD COLUMN acepta_ofertas INTEGER NOT NULL DEFAULT 0',
           );
+        }
+
+        // Migración de versión 2 a versión 3.
+        if (oldVersion < 3) {
+          await _crearTablasChat(db);
         }
       },
     );
@@ -136,6 +144,87 @@ class BaseDatos {
       CREATE INDEX idx_publicaciones_estado
       ON publicaciones(estado_publicacion)
     ''');
+    // Crear también las tablas de chat en instalaciones nuevas.
+
+    await _crearTablasChat(db);
+  }
+
+  //AGREGUE EL METODO
+  Future<void> _crearTablasChat(Database db) async {
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS conversaciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      publicacion_id INTEGER NOT NULL,
+      comprador_id INTEGER NOT NULL,
+      vendedor_id INTEGER NOT NULL,
+      fecha_creacion TEXT NOT NULL,
+      ultima_actividad TEXT NOT NULL,
+
+      FOREIGN KEY (publicacion_id)
+        REFERENCES publicaciones(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (comprador_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (vendedor_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE,
+
+      CHECK (comprador_id != vendedor_id),
+
+      UNIQUE (
+        publicacion_id,
+        comprador_id,
+        vendedor_id
+      )
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS mensajes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversacion_id INTEGER NOT NULL,
+      autor_id INTEGER NOT NULL,
+      texto TEXT NOT NULL,
+      fecha_envio TEXT NOT NULL,
+      leido INTEGER NOT NULL DEFAULT 0,
+
+      FOREIGN KEY (conversacion_id)
+        REFERENCES conversaciones(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (autor_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE
+    )
+  ''');
+
+    await db.execute('''
+    CREATE INDEX IF NOT EXISTS idx_conversaciones_comprador
+    ON conversaciones(comprador_id)
+  ''');
+
+    await db.execute('''
+    CREATE INDEX IF NOT EXISTS idx_conversaciones_vendedor
+    ON conversaciones(vendedor_id)
+  ''');
+
+    await db.execute('''
+    CREATE INDEX IF NOT EXISTS idx_conversaciones_publicacion
+    ON conversaciones(publicacion_id)
+  ''');
+
+    await db.execute('''
+    CREATE INDEX IF NOT EXISTS idx_mensajes_conversacion
+    ON mensajes(conversacion_id, fecha_envio)
+  ''');
+
+    await db.execute('''
+    CREATE INDEX IF NOT EXISTS idx_mensajes_autor
+    ON mensajes(autor_id)
+  ''');
   }
 
   // Cerrar conexión

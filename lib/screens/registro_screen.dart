@@ -73,19 +73,22 @@ class _RegistroScreenState extends State<RegistroScreen> {
         rol: _rol.name,
       );
 
-      // Iniciar sesión automáticamente
-      await UsuarioService.instance.iniciarSesion(
+      // Iniciar sesión automáticamente y recuperar el usuario guardado.
+      final usuario = await UsuarioService.instance.iniciarSesion(
         correo: _correo.text.trim(),
         password: _password.text,
       );
 
       if (!mounted) return;
 
-      // Actualizar los datos de la sesión en memoria
-      Sesion.nombre = _nombre.text.trim();
-      Sesion.correo = _correo.text.trim().toLowerCase();
-      Sesion.municipio = _municipio!;
-      Sesion.rol = _rol;
+      // Guardar la sesión completa, incluido el ID usado por los chats.
+      Sesion.usuarioId = (usuario['id'] as num).toInt();
+      Sesion.nombre = usuario['nombre'] as String;
+      Sesion.correo = usuario['correo'] as String;
+      Sesion.municipio = usuario['municipio'] as String;
+      Sesion.rol = RolUsuario.values.firstWhere(
+        (rol) => rol.name == usuario['rol'],
+      );
 
       // Ir al panel correspondiente
       Navigator.of(context).pushAndRemoveUntil(

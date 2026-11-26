@@ -1,7 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
+import '../models/sesion.dart';
+import '../services/usuario_service.dart';
+import 'dashboard_router.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,7 +14,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  Timer? _timer;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -41,18 +41,48 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    _timer = Timer(const Duration(seconds: 3), () {
+    _verificarSesion();
+  }
+
+  Future<void> _verificarSesion() async {
+    try {
+      await Future.delayed(const Duration(seconds: 3));
+
+      final usuario = await UsuarioService.instance.obtenerSesion();
+
       if (!mounted) return;
 
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
-    });
+      if (usuario != null) {
+        Sesion.usuarioId = (usuario['id'] as num).toInt();
+        Sesion.nombre = usuario['nombre'] as String;
+        Sesion.correo = usuario['correo'] as String;
+        Sesion.municipio = usuario['municipio'] as String;
+        Sesion.rol = RolUsuario.values.firstWhere(
+          (rol) => rol.name == usuario['rol'],
+          orElse: () => RolUsuario.usuario,
+        );
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardRouter()),
+        );
+        return;
+      }
+
+      _irAlLogin();
+    } catch (_) {
+      if (!mounted) return;
+      _irAlLogin();
+    }
+  }
+
+  void _irAlLogin() {
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }

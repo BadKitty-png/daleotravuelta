@@ -6,6 +6,7 @@ import 'buscar_screen.dart';
 import 'chats_screen.dart';
 import 'perfil_screen.dart';
 import 'publicar_tipo_screen.dart';
+import 'dashboard_usuario_screen.dart';
 
 /// Barra de navegación inferior:
 /// Inicio, Buscar, Publicar, Chats y Perfil.
@@ -17,20 +18,22 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  // Índice de la página mostrada (0..3).
-  // Publicar abre un flujo independiente.
+  // Índice de la página mostrada.
   int _pagina = 0;
 
-  static const _paginas = [
-    InicioScreen(),
-    BuscarScreen(),
-    ChatsScreen(),
-    PerfilScreen(),
+  // Se reutilizan las pantallas existentes.
+  late final List<Widget> _paginas = [
+    const InicioScreen(),
+    const DashboardUsuarioScreen(),
+    const BuscarScreen(),
+    const ChatsScreen(),
+    const PerfilScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final navIndex = _pagina >= 2 ? _pagina + 1 : _pagina;
+    // Publicar ocupa el índice 3 de la barra, pero no es una página.
+    final navIndex = _pagina >= 3 ? _pagina + 1 : _pagina;
 
     return Scaffold(
       backgroundColor: DaleColores.crema,
@@ -67,13 +70,14 @@ class _MainShellState extends State<MainShell> {
         child: NavigationBar(
           selectedIndex: navIndex,
           onDestinationSelected: (i) {
-            if (i == 2) {
+            // Publicar abre su flujo independiente.
+            if (i == 3) {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PublicarTipoScreen()),
               );
             } else {
               setState(() {
-                _pagina = i > 2 ? i - 1 : i;
+                _pagina = i > 3 ? i - 1 : i;
               });
             }
           },
@@ -82,6 +86,11 @@ class _MainShellState extends State<MainShell> {
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home_rounded),
               label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard_rounded),
+              label: 'Mi panel',
             ),
             NavigationDestination(
               icon: Icon(Icons.search_rounded),

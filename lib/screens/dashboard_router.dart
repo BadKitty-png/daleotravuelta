@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../models/sesion.dart';
-import 'dashboard_usuario_screen.dart';
+import 'main_shell.dart';
 import 'dashboard_organizacion_screen.dart';
 import 'dashboard_admin_screen.dart';
 
-/// Elige el dashboard según el tipo de usuario.
+/// Elige la pantalla inicial según el tipo de usuario.
 class DashboardRouter extends StatelessWidget {
   const DashboardRouter({super.key});
 
@@ -12,9 +13,12 @@ class DashboardRouter extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (Sesion.rol) {
       case RolUsuario.usuario:
-        return const DashboardUsuarioScreen();
+        // El usuario normal entra primero a Inicio.
+        return const MainShell();
+
       case RolUsuario.organizacion:
         return const DashboardOrganizacionScreen();
+
       case RolUsuario.administrador:
         return const DashboardAdminScreen();
     }

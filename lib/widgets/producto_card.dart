@@ -4,13 +4,48 @@ import '../screens/producto_detalle_screen.dart';
 import 'estilo_app.dart';
 
 /// Datos de ejemplo (solo para maquetar, sin backend).
+
 class Producto {
   final String titulo;
   final String descripcion;
   final String precio;
   final String modalidad;
+  final int? id;
+  final int? usuarioId;
 
-  const Producto(this.titulo, this.descripcion, this.precio, this.modalidad);
+  const Producto(
+    this.titulo,
+    this.descripcion,
+    this.precio,
+    this.modalidad, {
+    this.id,
+    this.usuarioId,
+  });
+
+  // Convierte un registro de SQLite en un objeto Producto.
+  factory Producto.desdeMapa(Map<String, dynamic> mapa) {
+    final modalidad = (mapa['modalidad'] ?? 'Vender').toString();
+    final precioDato = mapa['precio'];
+
+    String precioTexto;
+
+    if (modalidad.toLowerCase() == 'donar') {
+      precioTexto = 'Gratis';
+    } else if (precioDato is num && precioDato % 1 == 0) {
+      precioTexto = '\$${precioDato.toInt()}';
+    } else {
+      precioTexto = '\$${precioDato ?? 0}';
+    }
+
+    return Producto(
+      (mapa['titulo'] ?? 'Sin título').toString(),
+      (mapa['descripcion'] ?? '').toString(),
+      precioTexto,
+      modalidad,
+      id: (mapa['id'] as num?)?.toInt(),
+      usuarioId: (mapa['usuario_id'] as num?)?.toInt(),
+    );
+  }
 }
 
 const productosDemo = [

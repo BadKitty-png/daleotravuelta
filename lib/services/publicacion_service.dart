@@ -7,6 +7,36 @@ class PublicacionService {
 
   PublicacionService._init();
 
+  //----
+  // Obtener todas las publicaciones activas.
+  Future<List<Map<String, dynamic>>> obtenerPublicaciones() async {
+    final Database db = await BaseDatos.instance.database;
+
+    return await db.query(
+      'publicaciones',
+      where: 'estado_publicacion = ?',
+      whereArgs: ['activa'],
+      orderBy: 'fecha_creacion DESC',
+    );
+  }
+
+  ///Segundo cambio
+  //--------------------
+  // Obtener las publicaciones del usuario que inició sesión.
+  Future<List<Map<String, dynamic>>> obtenerMisPublicaciones({
+    required int usuarioId,
+  }) async {
+    final Database db = await BaseDatos.instance.database;
+
+    return await db.query(
+      'publicaciones',
+      where: 'usuario_id = ? AND estado_publicacion = ?',
+      whereArgs: [usuarioId, 'activa'],
+      orderBy: 'fecha_creacion DESC',
+    );
+  }
+
+  //--------------------
   Future<int> guardarPublicacion({
     required int usuarioId,
     required String categoria,

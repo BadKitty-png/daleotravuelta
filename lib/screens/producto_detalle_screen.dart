@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/sesion.dart';
+import '../services/chat_service.dart';
+import 'chat_detalle_screen.dart';
 import '../widgets/producto_card.dart';
 import '../widgets/estilo_app.dart';
 
@@ -38,6 +41,73 @@ class ProductoDetalleScreen extends StatelessWidget {
     }
 
     return Icons.recycling_rounded;
+  }
+
+  Future<void> _contactarPorChat(BuildContext context) async {
+    if (Sesion.usuarioId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes iniciar sesión para contactar al propietario.'),
+        ),
+      );
+      return;
+    }
+
+    if (producto.id == null || producto.usuarioId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esta publicación todavía no está vinculada a un usuario.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (Sesion.usuarioId == producto.usuarioId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esta es tu publicación. No puedes contactarte contigo mismo.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final chatService = ChatService.instance;
+
+      final conversacionId = await chatService.crearORecuperarConversacion(
+        publicacionId: producto.id!,
+        vendedorId: producto.usuarioId!,
+      );
+
+      final nombre = await chatService.obtenerNombreUsuario(
+        producto.usuarioId!,
+      );
+
+      if (!context.mounted) return;
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatDetalleScreen(
+            conversacionId: conversacionId,
+            nombre: nombre,
+            inicial: nombre.trim().isNotEmpty
+                ? nombre.trim().substring(0, 1).toUpperCase()
+                : '?',
+            color: DaleColores.verdeLima,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override
@@ -216,7 +286,7 @@ class ProductoDetalleScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => _contactarPorChat(context),
                     icon: const Icon(Icons.chat_bubble_outline_rounded),
                     label: const Text(
                       'Contactar por chat',
