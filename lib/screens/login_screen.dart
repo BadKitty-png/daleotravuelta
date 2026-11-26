@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
 import '../services/usuario_service.dart';
-
 import '../models/sesion.dart';
 import 'dashboard_router.dart';
 import 'registro_screen.dart';
-
-const municipiosGto = [
-  'Dolores Hidalgo',
-  'San Miguel de Allende',
-  'San Luis de la Paz',
-  'San Diego de la Unión',
-];
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _correo = TextEditingController();
   final _password = TextEditingController();
 
-  String? _municipio;
   bool _ocultar = true;
 
   // Paleta de Dale la Vuelta
@@ -47,6 +38,10 @@ class _LoginScreenState extends State<LoginScreen> {
     _password.dispose();
     super.dispose();
   }
+
+  // ------------------------------------------
+  // INICIAR SESIÓN
+  // ------------------------------------------
 
   void _entrar() {
     if (!_formKey.currentState!.validate()) return;
@@ -70,6 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
     _iniciarSesionNormal();
   }
 
+  // ------------------------------------------
+  // VALIDAR USUARIO EN SQLITE
+  // ------------------------------------------
+
   Future<void> _iniciarSesionNormal() async {
     try {
       final usuario = await UsuarioService.instance.iniciarSesion(
@@ -81,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Sesion.nombre = usuario['nombre'] as String;
       Sesion.correo = usuario['correo'] as String;
       Sesion.municipio = usuario['municipio'] as String;
+
       Sesion.rol = RolUsuario.values.firstWhere(
         (rol) => rol.name == usuario['rol'],
       );
@@ -102,6 +102,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ------------------------------------------
+  // CONSTRUCCIÓN PRINCIPAL
+  // ------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,10 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // HERO SUPERIOR
               _construirHero(),
 
-              // FORMULARIO FLOTANTE
               Transform.translate(
                 offset: const Offset(0, -38),
                 child: Padding(
@@ -123,10 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // ESPACIO PARA COMPENSAR EL DESPLAZAMIENTO
               const SizedBox(height: 0),
 
-              // INSIGNIA ECOLÓGICA
               Transform.translate(
                 offset: const Offset(0, -20),
                 child: _construirInsignia(),
@@ -160,7 +160,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Stack(
             children: [
-              // Decoraciones circulares de fondo
               Positioned(
                 top: -75,
                 right: -55,
@@ -198,8 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: verdeLima.withValues(alpha: 0.35),
                 ),
               ),
-
-              // Contenido principal
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 20),
@@ -207,12 +204,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 5),
-
-                      // LOGO CONCÉNTRICO
                       _construirLogo(),
-
                       const SizedBox(height: 15),
-
                       Text(
                         'Dale la Vuelta',
                         style: estilo.copyWith(
@@ -222,9 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           letterSpacing: -0.8,
                         ),
                       ),
-
                       const SizedBox(height: 6),
-
                       Text(
                         'Todo merece una segunda oportunidad',
                         style: estilo.copyWith(
@@ -258,7 +249,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Logo de tres círculos concéntricos
+  // ------------------------------------------
+  // LOGO
+  // ------------------------------------------
+
   Widget _construirLogo() {
     return SizedBox(
       width: 100,
@@ -297,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ------------------------------------------
-  // TARJETA DEL FORMULARIO
+  // FORMULARIO
   // ------------------------------------------
 
   Widget _construirFormulario() {
@@ -348,6 +342,12 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               controller: _correo,
               keyboardType: TextInputType.emailAddress,
+
+              // BLOQUEAR ESPACIOS
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'\s')),
+              ],
+
               style: estilo.copyWith(
                 fontSize: 13,
                 color: texto,
@@ -358,9 +358,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 hint: 'tu@correo.com',
               ),
               validator: (v) {
-                final t = v?.trim() ?? '';
+                final t = v ?? '';
 
-                if (t.isEmpty) return 'Escribe tu correo';
+                if (t.isEmpty) {
+                  return 'Escribe tu correo';
+                }
+
+                if (RegExp(r'\s').hasMatch(t)) {
+                  return 'El correo no debe contener espacios';
+                }
 
                 final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t);
 
@@ -378,6 +384,12 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               controller: _password,
               obscureText: _ocultar,
+
+              // BLOQUEAR ESPACIOS
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'\s')),
+              ],
+
               style: estilo.copyWith(
                 fontSize: 13,
                 color: texto,
@@ -406,50 +418,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   return 'Escribe tu contraseña';
                 }
 
+                if (RegExp(r'\s').hasMatch(v)) {
+                  return 'La contraseña no debe contener espacios';
+                }
+
                 if (v.length < 6) {
                   return 'Mínimo 6 caracteres';
                 }
 
                 return null;
-              },
-            ),
-
-            const SizedBox(height: 19),
-
-            // MUNICIPIO
-            _construirEtiqueta('Tu municipio'),
-
-            const SizedBox(height: 9),
-
-            DropdownButtonFormField<String>(
-              value: _municipio,
-              isExpanded: true,
-              icon: const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: verdeBosque,
-              ),
-              style: estilo.copyWith(
-                fontSize: 13,
-                color: texto,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: _decoracionInput(
-                icono: Icons.location_on_outlined,
-                hint: 'Selecciona tu municipio',
-              ),
-              items: municipiosGto.map((m) {
-                return DropdownMenuItem(
-                  value: m,
-                  child: Text(m, overflow: TextOverflow.ellipsis),
-                );
-              }).toList(),
-              onChanged: (v) {
-                setState(() {
-                  _municipio = v;
-                });
-              },
-              validator: (v) {
-                return v == null ? 'Selecciona tu municipio' : null;
               },
             ),
 
@@ -532,7 +509,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       filled: true,
       fillColor: fondoInput,
-
       prefixIcon: Padding(
         padding: const EdgeInsets.all(9),
         child: Container(
@@ -545,33 +521,25 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Icon(icono, color: verdeBosque, size: 18),
         ),
       ),
-
       prefixIconConstraints: const BoxConstraints(minWidth: 57, minHeight: 52),
-
       suffixIcon: suffix,
-
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: verdeBosque, width: 1.3),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1),

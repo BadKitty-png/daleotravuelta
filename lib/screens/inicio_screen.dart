@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/publicacion_service.dart';
 import '../widgets/producto_card.dart';
 import '../widgets/estilo_app.dart';
+import 'publicar_tipo_screen.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -124,6 +125,47 @@ class _InicioScreenState extends State<InicioScreen> {
                         ],
                       ),
                     ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Botón para comenzar una publicación.
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PublicarTipoScreen(),
+                        ),
+                      );
+
+                      if (!mounted) return;
+
+                      await _recargarPublicaciones();
+                    },
+                    icon: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 22,
+                    ),
+                    label: const Text(
+                      'Publicar un objeto',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Roboto',
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DaleColores.verdeBosque,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
                   ),
                 ),
 

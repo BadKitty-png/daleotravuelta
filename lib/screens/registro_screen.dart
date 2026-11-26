@@ -4,7 +4,13 @@ import '../services/usuario_service.dart'; //Import para base de datos
 
 import '../models/sesion.dart';
 import 'dashboard_router.dart';
-import 'login_screen.dart' show municipiosGto;
+
+const municipiosGto = [
+  'Dolores Hidalgo',
+  'San Miguel de Allende',
+  'San Luis de la Paz',
+  'San Diego de la Unión',
+];
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});

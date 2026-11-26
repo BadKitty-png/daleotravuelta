@@ -5,11 +5,10 @@ import 'inicio_screen.dart';
 import 'buscar_screen.dart';
 import 'chats_screen.dart';
 import 'perfil_screen.dart';
-import 'publicar_tipo_screen.dart';
 import 'dashboard_usuario_screen.dart';
 
 /// Barra de navegación inferior:
-/// Inicio, Buscar, Publicar, Chats y Perfil.
+/// Inicio, Mi panel, Chats, Buscar y Perfil.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -21,20 +20,17 @@ class _MainShellState extends State<MainShell> {
   // Índice de la página mostrada.
   int _pagina = 0;
 
-  // Se reutilizan las pantallas existentes.
+  // Pantallas en el mismo orden que los botones inferiores.
   late final List<Widget> _paginas = [
     const InicioScreen(),
     const DashboardUsuarioScreen(),
-    const BuscarScreen(),
     const ChatsScreen(),
+    const BuscarScreen(),
     const PerfilScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Publicar ocupa el índice 3 de la barra, pero no es una página.
-    final navIndex = _pagina >= 3 ? _pagina + 1 : _pagina;
-
     return Scaffold(
       backgroundColor: DaleColores.crema,
       body: IndexedStack(index: _pagina, children: _paginas),
@@ -68,18 +64,11 @@ class _MainShellState extends State<MainShell> {
           }),
         ),
         child: NavigationBar(
-          selectedIndex: navIndex,
+          selectedIndex: _pagina,
           onDestinationSelected: (i) {
-            // Publicar abre su flujo independiente.
-            if (i == 3) {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PublicarTipoScreen()),
-              );
-            } else {
-              setState(() {
-                _pagina = i > 3 ? i - 1 : i;
-              });
-            }
+            setState(() {
+              _pagina = i;
+            });
           },
           destinations: const [
             NavigationDestination(
@@ -93,19 +82,14 @@ class _MainShellState extends State<MainShell> {
               label: 'Mi panel',
             ),
             NavigationDestination(
-              icon: Icon(Icons.search_rounded),
-              selectedIcon: Icon(Icons.search_rounded),
-              label: 'Buscar',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.add_circle_outline_rounded),
-              selectedIcon: Icon(Icons.add_circle_rounded),
-              label: 'Publicar',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.chat_bubble_outline_rounded),
               selectedIcon: Icon(Icons.chat_bubble_rounded),
               label: 'Chats',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search_rounded),
+              selectedIcon: Icon(Icons.search_rounded),
+              label: 'Buscar',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),
