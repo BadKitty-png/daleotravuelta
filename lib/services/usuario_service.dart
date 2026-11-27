@@ -5,6 +5,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/base_datos.dart';
+import '../models/sesion.dart';
 
 class UsuarioService {
   static final UsuarioService instance = UsuarioService._init();
@@ -115,6 +116,62 @@ class UsuarioService {
     }, conflictAlgorithm: ConflictAlgorithm.abort);
 
     return id;
+  }
+
+  // Solo un administrador con sesión activa puede crear otro administrador.
+  Future<int> registrarAdministrador({
+    required String nombre,
+    required String correo,
+    required String password,
+    required String municipio,
+  }) async {
+    final administradorId = Sesion.usuarioId;
+    if (administradorId == null || Sesion.rol != RolUsuario.administrador) {
+      throw Exception('No tienes permiso para crear administradores.');
+    }
+
+    final db = await BaseDatos.instance.database;
+    final administrador = await db.query(
+      'usuarios',
+      columns: ['id'],
+      where: 'id = ? AND rol = ? AND activo = 1',
+      whereArgs: [administradorId, 'administrador'],
+      limit: 1,
+    );
+    if (administrador.isEmpty) {
+      throw Exception('La sesión de administrador no es válida.');
+    }
+
+    final correoLimpio = correo.trim().toLowerCase();
+    if (nombre.trim().isEmpty || municipio.trim().isEmpty) {
+      throw Exception('Completa todos los campos.');
+    }
+    if (password.length < 8) {
+      throw Exception('La contraseña debe tener al menos 8 caracteres.');
+    }
+
+    final existente = await db.query(
+      'usuarios',
+      columns: ['id'],
+      where: 'correo = ?',
+      whereArgs: [correoLimpio],
+      limit: 1,
+    );
+    if (existente.isNotEmpty) {
+      throw Exception('Este correo ya está registrado.');
+    }
+
+    final sal = _generarSal();
+    final hash = await _crearHash(password, sal);
+    return db.insert('usuarios', {
+      'nombre': nombre.trim(),
+      'correo': correoLimpio,
+      'password_hash': hash,
+      'municipio': municipio.trim(),
+      'rol': 'administrador',
+      'fecha_creacion': DateTime.now().toIso8601String(),
+      'activo': 1,
+    }, conflictAlgorithm: ConflictAlgorithm.abort);
   }
 
   // Iniciar sesión

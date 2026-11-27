@@ -3,7 +3,9 @@ import 'package:sqflite/sqflite.dart';
 
 import '../database/base_datos.dart';
 import '../models/sesion.dart';
+import '../services/usuario_service.dart';
 import '../widgets/estilo_app.dart';
+import 'login_screen.dart';
 
 class DashboardAdminScreen extends StatefulWidget {
   const DashboardAdminScreen({super.key});
@@ -100,6 +102,166 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
     }
   }
 
+  Future<void> _cerrarSesion() async {
+    final confirmar = await _confirmar(
+      'Cerrar sesión',
+      '¿Deseas salir del panel de administración?',
+    );
+    if (!confirmar) return;
+
+    await UsuarioService.instance.cerrarSesion();
+    Sesion.usuarioId = null;
+    Sesion.nombre = 'Nombre de usuario';
+    Sesion.correo = '';
+    Sesion.municipio = 'Dolores Hidalgo';
+    Sesion.rol = RolUsuario.usuario;
+
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _registrarAdministrador() async {
+    final nombre = TextEditingController();
+    final correo = TextEditingController();
+    final municipio = TextEditingController();
+    final password = TextEditingController();
+    final confirmarPassword = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var ocultarPassword = true;
+
+    final guardar = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Registrar administrador'),
+          content: SizedBox(
+            width: 430,
+            child: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _campoAdministrador(nombre, 'Nombre completo'),
+                    _campoAdministrador(
+                      correo,
+                      'Correo electrónico',
+                      tipo: TextInputType.emailAddress,
+                    ),
+                    _campoAdministrador(municipio, 'Municipio'),
+                    _campoAdministrador(
+                      password,
+                      'Contraseña',
+                      ocultar: ocultarPassword,
+                      sufijo: IconButton(
+                        onPressed: () => setDialogState(
+                          () => ocultarPassword = !ocultarPassword,
+                        ),
+                        icon: Icon(
+                          ocultarPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
+                    ),
+                    _campoAdministrador(
+                      confirmarPassword,
+                      'Confirmar contraseña',
+                      ocultar: ocultarPassword,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: DaleColores.verdeBosque,
+              ),
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                if (password.text != confirmarPassword.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Las contraseñas no coinciden.'),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
+              child: const Text('Registrar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (guardar == true) {
+      try {
+        await UsuarioService.instance.registrarAdministrador(
+          nombre: nombre.text,
+          correo: correo.text,
+          password: password.text,
+          municipio: municipio.text,
+        );
+        if (mounted) _mensaje('Administrador registrado correctamente.');
+        await _cargarDatos();
+      } catch (e) {
+        if (mounted) {
+          _mensaje(e.toString().replaceFirst('Exception: ', ''));
+        }
+      }
+    }
+
+    nombre.dispose();
+    correo.dispose();
+    municipio.dispose();
+    password.dispose();
+    confirmarPassword.dispose();
+  }
+
+  Widget _campoAdministrador(
+    TextEditingController controller,
+    String etiqueta, {
+    TextInputType tipo = TextInputType.text,
+    bool ocultar = false,
+    Widget? sufijo,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: tipo,
+        obscureText: ocultar,
+        validator: (valor) {
+          if (valor == null || valor.trim().isEmpty) {
+            return 'Este campo es obligatorio.';
+          }
+          if (ocultar && valor.length < 8) {
+            return 'Usa por lo menos 8 caracteres.';
+          }
+          return null;
+        },
+        decoration: InputDecoration(
+          labelText: etiqueta,
+          suffixIcon: sufijo,
+          filled: true,
+          fillColor: DaleColores.crema,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+
   void _mensaje(String mensaje) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(mensaje)));
@@ -164,9 +326,19 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            tooltip: 'Registrar administrador',
+            onPressed: _registrarAdministrador,
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+          ),
+          IconButton(
             tooltip: 'Actualizar',
             onPressed: _cargarDatos,
             icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            onPressed: _cerrarSesion,
+            icon: const Icon(Icons.logout_rounded),
           ),
         ],
       ),
@@ -247,7 +419,7 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.55,
+          childAspectRatio: 1.25,
           children: [
             _tarjetaResumen(
               'Usuarios',
