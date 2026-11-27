@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../models/sesion.dart';
 import '../services/chat_service.dart';
+import '../services/publicacion_service.dart';
 import 'chat_detalle_screen.dart';
 import '../widgets/producto_card.dart';
 import '../widgets/estilo_app.dart';
+import '../widgets/boton_favorito.dart';
 
 class ProductoDetalleScreen extends StatelessWidget {
   final Producto producto;
@@ -128,55 +132,19 @@ class ProductoDetalleScreen extends StatelessWidget {
             fontFamily: 'Roboto',
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: BotonFavorito(publicacionId: producto.id, size: 42),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
-          // Imagen provisional
-          Container(
-            height: 250,
-            margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  DaleColores.verdeLima.withOpacity(0.35),
-                  DaleColores.verdeLima.withOpacity(0.12),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: DaleColores.borde),
-            ),
-            child: Stack(
-              children: [
-                const Positioned(
-                  top: 18,
-                  right: 20,
-                  child: Icon(
-                    Icons.eco_outlined,
-                    size: 65,
-                    color: Color(0x553D7050),
-                  ),
-                ),
-                const Positioned(
-                  bottom: 18,
-                  left: 20,
-                  child: Icon(
-                    Icons.autorenew_rounded,
-                    size: 48,
-                    color: Color(0x443D7050),
-                  ),
-                ),
-                Center(
-                  child: Icon(
-                    _iconoProducto(),
-                    size: 100,
-                    color: DaleColores.verdeBosque,
-                  ),
-                ),
-              ],
-            ),
+          _GaleriaProducto(
+            producto: producto,
+            iconoProvisional: _iconoProducto(),
           ),
 
           Padding(
@@ -282,6 +250,10 @@ class ProductoDetalleScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
+                _DatosProductoDesplegables(producto: producto),
+
+                const SizedBox(height: 24),
+
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -362,6 +334,345 @@ class ProductoDetalleScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DatosProductoDesplegables extends StatefulWidget {
+  final Producto producto;
+
+  const _DatosProductoDesplegables({required this.producto});
+
+  @override
+  State<_DatosProductoDesplegables> createState() =>
+      _DatosProductoDesplegablesState();
+}
+
+class _DatosProductoDesplegablesState
+    extends State<_DatosProductoDesplegables> {
+  bool _mostrarDatos = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final producto = widget.producto;
+    final ubicacion = [
+      producto.colonia,
+      producto.municipio,
+    ].whereType<String>().where((v) => v.trim().isNotEmpty).join(', ');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DaleColores.borde),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => setState(() => _mostrarDatos = !_mostrarDatos),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: DaleColores.verdeBosque,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _mostrarDatos
+                          ? 'Ocultar todos los datos'
+                          : 'Ver todos los datos',
+                      style: const TextStyle(
+                        color: DaleColores.verdeBosque,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _mostrarDatos
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: DaleColores.verdeBosque,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            child: _mostrarDatos
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(15, 0, 15, 16),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: DaleColores.borde)),
+                    ),
+                    child: Column(
+                      children: [
+                        _dato('Categoría', producto.categoria),
+                        _dato('Modalidad', producto.modalidad),
+                        _dato('Marca', producto.marca),
+                        _dato('Modelo', producto.modelo),
+                        _dato('Año', producto.anio?.toString()),
+                        _dato('Talla', producto.talla),
+                        _dato('Estado', producto.estadoProducto),
+                        _dato('Número de serie', producto.numeroSerie),
+                        _dato('Características', producto.caracteristicas),
+                        _dato('Ubicación', ubicacion),
+                        _dato(
+                          'Acepta ofertas',
+                          producto.aceptaOfertas ? 'Sí' : 'No',
+                        ),
+                        _dato('Precio', producto.precio),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dato(String etiqueta, String? valor) {
+    if (valor == null || valor.trim().isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 118,
+            child: Text(
+              etiqueta,
+              style: const TextStyle(
+                color: DaleColores.grisMusgo,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              valor,
+              style: const TextStyle(
+                color: DaleColores.carbon,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GaleriaProducto extends StatefulWidget {
+  final Producto producto;
+  final IconData iconoProvisional;
+
+  const _GaleriaProducto({
+    required this.producto,
+    required this.iconoProvisional,
+  });
+
+  @override
+  State<_GaleriaProducto> createState() => _GaleriaProductoState();
+}
+
+class _GaleriaProductoState extends State<_GaleriaProducto> {
+  late final Future<List<String>> _imagenesFuture;
+  int _paginaActual = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _imagenesFuture = _obtenerImagenes();
+  }
+
+  Future<List<String>> _obtenerImagenes() async {
+    if (widget.producto.id != null) {
+      final rutas = await PublicacionService.instance
+          .obtenerImagenesPublicacion(widget.producto.id!);
+
+      return rutas.where((ruta) => File(ruta).existsSync()).toList();
+    }
+
+    final portada = widget.producto.imagenPortada?.trim();
+
+    if (portada != null && portada.isNotEmpty && File(portada).existsSync()) {
+      return [portada];
+    }
+
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<String>>(
+      future: _imagenesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 250,
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: DaleColores.borde),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(color: DaleColores.verdeBosque),
+            ),
+          );
+        }
+
+        final imagenes = snapshot.data ?? [];
+
+        if (imagenes.isEmpty) {
+          return _construirImagenProvisional();
+        }
+
+        return Container(
+          height: 250,
+          margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: DaleColores.borde),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: PageView.builder(
+                  itemCount: imagenes.length,
+                  onPageChanged: (pagina) {
+                    setState(() => _paginaActual = pagina);
+                  },
+                  itemBuilder: (context, index) {
+                    return Image.file(
+                      File(imagenes[index]),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _contenidoProvisional(),
+                    );
+                  },
+                ),
+              ),
+              if (imagenes.length > 1)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(imagenes.length, (index) {
+                      final seleccionada = index == _paginaActual;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: seleccionada ? 18 : 8,
+                        height: 8,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: seleccionada
+                              ? DaleColores.verdeBosque
+                              : Colors.white.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 3),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              if (imagenes.length > 1)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      '${_paginaActual + 1}/${imagenes.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _construirImagenProvisional() {
+    return Container(
+      height: 250,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: DaleColores.borde),
+      ),
+      child: _contenidoProvisional(),
+    );
+  }
+
+  Widget _contenidoProvisional() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            DaleColores.verdeLima.withOpacity(0.35),
+            DaleColores.verdeLima.withOpacity(0.12),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          const Positioned(
+            top: 18,
+            right: 20,
+            child: Icon(Icons.eco_outlined, size: 65, color: Color(0x553D7050)),
+          ),
+          const Positioned(
+            bottom: 18,
+            left: 20,
+            child: Icon(
+              Icons.autorenew_rounded,
+              size: 48,
+              color: Color(0x443D7050),
+            ),
+          ),
+          Center(
+            child: Icon(
+              widget.iconoProvisional,
+              size: 100,
+              color: DaleColores.verdeBosque,
             ),
           ),
         ],

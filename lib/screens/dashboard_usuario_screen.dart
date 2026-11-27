@@ -5,6 +5,8 @@ import '../services/publicacion_service.dart';
 import '../widgets/dashboard_widgets.dart';
 import 'main_shell.dart';
 import 'publicar_tipo_screen.dart';
+import 'chats_screen.dart';
+import 'buscar_screen.dart';
 
 /// Dashboard — Usuario conectado a SQLite.
 class DashboardUsuarioScreen extends StatefulWidget {
@@ -44,6 +46,45 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
     await _publicacionesFuture;
   }
 
+  // Abrir la pantalla de chats existente.
+  void _abrirChats() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const ChatsScreen()));
+  }
+
+  // Explorar publicaciones para encontrar intercambios.
+  void _abrirIntercambios() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const BuscarScreen()));
+  }
+
+  // Aviso de que los eco-puntos todavía no están disponibles.
+  void _mostrarAvisoEcoPuntos() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(
+          Icons.eco_outlined,
+          size: 42,
+          color: Color(0xFF3D7050),
+        ),
+        title: const Text('Eco-puntos'),
+        content: const Text(
+          'Esta función todavía está en desarrollo. '
+          'Próximamente podrás acumular eco-puntos por tus '
+          'acciones de reutilización, donación e intercambio.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DashboardScaffold(
@@ -63,7 +104,8 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
               return Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'No se pudieron cargar tus publicaciones: ${snapshot.error}',
+                  'No se pudieron cargar tus publicaciones: '
+                  '${snapshot.error}',
                 ),
               );
             }
@@ -74,11 +116,16 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ESTADÍSTICAS PRINCIPALES
                 filaStats([
-                  const StatCard(
-                    icono: Icons.eco_outlined,
-                    valor: '0',
-                    etiqueta: 'Eco-puntos',
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _mostrarAvisoEcoPuntos,
+                    child: const StatCard(
+                      icono: Icons.eco_outlined,
+                      valor: '0',
+                      etiqueta: 'Eco-puntos',
+                    ),
                   ),
                   StatCard(
                     icono: Icons.inventory_2_outlined,
@@ -89,21 +136,30 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
 
                 const SizedBox(height: 8),
 
-                filaStats(const [
-                  StatCard(
-                    icono: Icons.swap_horiz,
-                    valor: '0',
-                    etiqueta: 'Intercambios',
+                filaStats([
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _abrirIntercambios,
+                    child: const StatCard(
+                      icono: Icons.swap_horiz,
+                      valor: '0',
+                      etiqueta: 'Intercambios',
+                    ),
                   ),
-                  StatCard(
-                    icono: Icons.chat_bubble_outline,
-                    valor: '0',
-                    etiqueta: 'Chats activos',
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _abrirChats,
+                    child: const StatCard(
+                      icono: Icons.chat_bubble_outline,
+                      valor: 'Ver',
+                      etiqueta: 'Chats activos',
+                    ),
                   ),
                 ]),
 
                 const SizedBox(height: 16),
 
+                // EXPLORAR PRODUCTOS
                 FilledButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -116,6 +172,7 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
 
                 const SizedBox(height: 8),
 
+                // PUBLICAR PRODUCTO
                 OutlinedButton.icon(
                   onPressed: () async {
                     await Navigator.of(context).push(
@@ -159,7 +216,8 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Cuando publiques un objeto, aparecerá aquí.',
+                            'Cuando publiques un objeto, '
+                            'aparecerá aquí.',
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -179,8 +237,11 @@ class _DashboardUsuarioScreenState extends State<DashboardUsuarioScreen> {
 
   Widget _tarjetaPublicacion(Map<String, dynamic> publicacion) {
     final titulo = publicacion['titulo']?.toString() ?? 'Sin título';
+
     final categoria = publicacion['categoria']?.toString() ?? 'Sin categoría';
+
     final modalidad = publicacion['modalidad']?.toString() ?? 'Sin modalidad';
+
     final municipio = publicacion['municipio']?.toString() ?? '';
 
     final precio = (publicacion['precio'] as num?)?.toDouble() ?? 0;

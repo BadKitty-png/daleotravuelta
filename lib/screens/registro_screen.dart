@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'documentos_legales_screen.dart';
+
 import '../services/usuario_service.dart'; //Import para base de datos
 
 import '../models/sesion.dart';
@@ -440,40 +442,109 @@ class _RegistroScreenState extends State<RegistroScreen> {
             const SizedBox(height: 15),
 
             // TÉRMINOS
+
+            // DOCUMENTOS LEGALES
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: fondoInput,
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: verde,
-                value: _terminos,
-                onChanged: (v) {
-                  setState(() {
-                    _terminos = v ?? false;
-                    _errorTerminos = false;
-                  });
-                },
-                title: Text(
-                  'Acepto los términos y condiciones',
-                  style: estilo.copyWith(
-                    fontSize: 12,
-                    color: texto,
-                    fontWeight: FontWeight.w600,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'DOCUMENTOS LEGALES',
+                    style: estilo.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: verde,
+                    ),
                   ),
-                ),
-                subtitle: _errorTerminos
-                    ? Text(
-                        'Debes aceptar para continuar',
-                        style: estilo.copyWith(
-                          fontSize: 11,
-                          color: Colors.redAccent,
+
+                  const SizedBox(height: 10),
+
+                  // Botón para leer privacidad
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _abrirDocumento(
+                          'Aviso de privacidad',
+                          PoliticasLegales.privacidad,
+                        );
+                      },
+                      icon: const Icon(Icons.privacy_tip_outlined),
+                      label: const Text('Leer política de privacidad'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: verde,
+                        side: const BorderSide(color: verde),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
                         ),
-                      )
-                    : null,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  // Botón para leer términos
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _abrirDocumento(
+                          'Términos y condiciones',
+                          PoliticasLegales.terminos,
+                        );
+                      },
+                      icon: const Icon(Icons.description_outlined),
+                      label: const Text('Leer términos y condiciones'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: verde,
+                        side: const BorderSide(color: verde),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Casilla de aceptación
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: verde,
+                    value: _terminos,
+                    onChanged: (v) {
+                      setState(() {
+                        _terminos = v ?? false;
+                        _errorTerminos = false;
+                      });
+                    },
+                    title: Text(
+                      'He leído y acepto los términos y condiciones y confirmo que he leído el aviso de privacidad.',
+                      style: estilo.copyWith(
+                        fontSize: 12,
+                        color: texto,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: _errorTerminos
+                        ? Text(
+                            'Debes aceptar para continuar',
+                            style: estilo.copyWith(
+                              fontSize: 11,
+                              color: Colors.redAccent,
+                            ),
+                          )
+                        : null,
+                  ),
+                ],
               ),
             ),
 
@@ -706,6 +777,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _abrirDocumento(String titulo, String contenido) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DocumentoLegalScreen(titulo: titulo, contenido: contenido),
       ),
     );
   }

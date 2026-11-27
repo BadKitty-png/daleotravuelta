@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../database/base_datos.dart';
 import '../models/sesion.dart';
 import '../widgets/estilo_app.dart';
+import 'editar_publicacion_screen.dart';
+import 'favoritos_screen.dart';
 import 'login_screen.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -24,7 +26,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _cargarPerfil();
   }
 
-  // Obtener información del usuario y sus publicaciones.
   Future<void> _cargarPerfil() async {
     try {
       final db = await BaseDatos.instance.database;
@@ -34,7 +35,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
         throw Exception('No hay un usuario activo.');
       }
 
-      // Consultar información del usuario.
       final usuarios = await db.query(
         'usuarios',
         where: 'id = ?',
@@ -48,7 +48,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       final usuario = usuarios.first;
 
-      // Consultar publicaciones del usuario.
       final publicaciones = await db.query(
         'publicaciones',
         where: 'usuario_id = ?',
@@ -85,82 +84,203 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  // Mostrar publicaciones del usuario.
+  String get _iniciales {
+    final partes = Sesion.nombre
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    if (partes.isEmpty) return 'U';
+
+    if (partes.length == 1) {
+      return partes.first.substring(0, 1).toUpperCase();
+    }
+
+    return '${partes.first[0]}${partes.last[0]}'.toUpperCase();
+  }
+
   void _mostrarPublicaciones() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: DaleColores.crema,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.65,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Mis publicaciones',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: DaleColores.carbon,
-                    ),
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.72,
+          decoration: const BoxDecoration(
+            color: DaleColores.crema,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 42,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: DaleColores.borde,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(height: 15),
-
-                  Expanded(
-                    child: _publicaciones.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Todavía no tienes publicaciones.',
-                              style: TextStyle(color: DaleColores.grisMusgo),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Mis publicaciones',
+                              style: TextStyle(
+                                color: DaleColores.carbon,
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            itemCount: _publicaciones.length,
-                            itemBuilder: (context, index) {
-                              final p = _publicaciones[index];
-
-                              final precio =
-                                  (p['precio'] as num?)?.toDouble() ?? 0;
-
-                              return Card(
-                                color: Colors.white,
-                                child: ListTile(
-                                  leading: const CircleAvatar(
-                                    backgroundColor: DaleColores.verdeLima,
-                                    child: Icon(
-                                      Icons.inventory_2_outlined,
-                                      color: DaleColores.verdeBosque,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    p['titulo']?.toString() ?? 'Sin título',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    '${p['categoria']} · ${p['municipio']}',
-                                  ),
-                                  trailing: Text(
-                                    precio == 0
-                                        ? 'Gratis'
-                                        : '\$${precio.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: DaleColores.verdeBosque,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$_totalPublicaciones objetos compartidos',
+                              style: const TextStyle(
+                                color: DaleColores.grisMusgo,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: DaleColores.verdeLima.withOpacity(.35),
+                        child: const Icon(
+                          Icons.inventory_2_outlined,
+                          color: DaleColores.verdeBosque,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: _publicaciones.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 55,
+                                color: DaleColores.verdeClaro,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Todavía no tienes publicaciones',
+                                style: TextStyle(
+                                  color: DaleColores.carbon,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                'Cuando compartas un objeto aparecerá aquí.',
+                                style: TextStyle(
+                                  color: DaleColores.grisMusgo,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
+                          itemCount: _publicaciones.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final p = _publicaciones[index];
+                            final precio =
+                                (p['precio'] as num?)?.toDouble() ?? 0;
+
+                            return Container(
+                              padding: const EdgeInsets.all(13),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(17),
+                                border: Border.all(color: DaleColores.borde),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 54,
+                                    height: 54,
+                                    decoration: BoxDecoration(
+                                      color: DaleColores.verdeLima.withOpacity(
+                                        .3,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(
+                                      Icons.recycling_rounded,
+                                      color: DaleColores.verdeBosque,
+                                      size: 27,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          p['titulo']?.toString() ??
+                                              'Sin título',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: DaleColores.carbon,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          '${p['categoria'] ?? 'Sin categoría'} · ${p['municipio'] ?? ''}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: DaleColores.grisMusgo,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          precio == 0
+                                              ? 'Gratis'
+                                              : '\$${precio.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            color: DaleColores.verdeBosque,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Editar publicación',
+                                    onPressed: () => _editarPublicacion(p),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: DaleColores.verdeBosque,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
           ),
         );
@@ -168,11 +288,57 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // Cerrar sesión y eliminar el registro de SQLite.
+  Future<void> _editarPublicacion(Map<String, dynamic> publicacion) async {
+    Navigator.of(context).pop();
+
+    final actualizada = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EditarPublicacionScreen(publicacion: publicacion),
+      ),
+    );
+
+    if (actualizada == true) {
+      await _cargarPerfil();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Publicación actualizada correctamente.')),
+      );
+    }
+  }
+
   Future<void> _cerrarSesion() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro de que deseas salir de tu cuenta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: DaleColores.grisMusgo),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade50,
+              foregroundColor: Colors.red.shade700,
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
     try {
       final db = await BaseDatos.instance.database;
-
       await db.delete('sesion', where: 'id = ?', whereArgs: [1]);
 
       Sesion.usuarioId = null;
@@ -199,19 +365,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DaleColores.crema,
-      appBar: AppBar(
-        backgroundColor: DaleColores.crema,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Mi perfil',
-          style: TextStyle(
-            color: DaleColores.carbon,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Roboto',
-          ),
-        ),
-      ),
       body: _cargando
           ? const Center(
               child: CircularProgressIndicator(color: DaleColores.verdeBosque),
@@ -219,71 +372,76 @@ class _PerfilScreenState extends State<PerfilScreen> {
           : RefreshIndicator(
               onRefresh: _cargarPerfil,
               color: DaleColores.verdeBosque,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  _construirTarjetaPerfil(),
-
-                  const SizedBox(height: 22),
-
-                  const Text(
-                    'Mi actividad',
-                    style: TextStyle(
-                      color: DaleColores.carbon,
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _construirActividad(),
-
-                  const SizedBox(height: 12),
-
-                  _opcion(
-                    icono: Icons.inventory_2_outlined,
-                    titulo: 'Mis publicaciones',
-                    subtitulo: 'Consulta los objetos que has publicado',
-                    onTap: _mostrarPublicaciones,
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  _opcion(
-                    icono: Icons.favorite_border_rounded,
-                    titulo: 'Mis favoritos',
-                    subtitulo: 'Objetos que te interesan',
-                    onTap: () => _mensaje(
-                      'La función de favoritos todavía no está disponible.',
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  _opcion(
-                    icono: Icons.volunteer_activism_outlined,
-                    titulo: 'Mis donaciones',
-                    subtitulo: 'Consulta tus aportaciones',
-                    onTap: () => _mensaje(
-                      'La función de donaciones todavía no está disponible.',
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  OutlinedButton.icon(
-                    onPressed: _cerrarSesion,
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Cerrar sesión'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: BorderSide(color: Colors.red.shade200),
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _construirCabecera()),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        const Text(
+                          'Mi actividad',
+                          style: TextStyle(
+                            color: DaleColores.carbon,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 13),
+                        _construirEstadistica(),
+                        const SizedBox(height: 25),
+                        const Text(
+                          'Mi cuenta',
+                          style: TextStyle(
+                            color: DaleColores.carbon,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 13),
+                        _opcion(
+                          icono: Icons.inventory_2_outlined,
+                          titulo: 'Mis publicaciones',
+                          subtitulo: 'Consulta los objetos que compartes',
+                          onTap: _mostrarPublicaciones,
+                        ),
+                        const SizedBox(height: 10),
+                        _opcion(
+                          icono: Icons.eco_outlined,
+                          titulo: 'Mis favoritos',
+                          subtitulo: 'Objetos que te interesan',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FavoritosScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _opcion(
+                          icono: Icons.volunteer_activism_outlined,
+                          titulo: 'Mis donaciones',
+                          subtitulo: 'Consulta tus aportaciones',
+                          onTap: () => _mensaje(
+                            'La función de donaciones todavía no está disponible.',
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        _construirCerrarSesion(),
+                        const SizedBox(height: 15),
+                        const Center(
+                          child: Text(
+                            'Dale la Vuelta · Todo merece otra oportunidad',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: DaleColores.grisMusgo,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ]),
                     ),
                   ),
                 ],
@@ -292,87 +450,125 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // Tarjeta principal del perfil.
-  Widget _construirTarjetaPerfil() {
+  Widget _construirCabecera() {
     return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      padding: const EdgeInsets.fromLTRB(22, 55, 22, 30),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [DaleColores.verdeBosque, DaleColores.verdeClaro],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Stack(
         children: [
           const Positioned.fill(child: DecoracionOrganica()),
           Column(
             children: [
-              const LogoDaleVuelta(size: 65),
-              const SizedBox(height: 12),
-
-              const CircleAvatar(
-                radius: 42,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 48,
-                  color: DaleColores.verdeBosque,
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Mi perfil',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _cargarPerfil,
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Actualizar perfil',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: DaleColores.verdeLima, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 43,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    _iniciales,
+                    style: const TextStyle(
+                      color: DaleColores.verdeBosque,
+                      fontSize: 27,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 13),
               Text(
                 Sesion.nombre,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 21,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Roboto',
                 ),
               ),
-
-              const SizedBox(height: 5),
-
+              const SizedBox(height: 6),
               Text(
                 Sesion.correo,
+                textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
-
-              const SizedBox(height: 5),
-
-              Text(
-                Sesion.municipio,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  fontFamily: 'Roboto',
-                ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: DaleColores.verdeLima,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    Sesion.municipio,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
+                  horizontal: 16,
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white.withOpacity(.18),
+                  borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: Colors.white30),
                 ),
-                child: Text(
-                  Sesion.rol.nombre,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Roboto',
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.verified_user_outlined,
+                      size: 15,
+                      color: DaleColores.verdeLima,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      Sesion.rol.nombre,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -382,50 +578,55 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // Actividad del usuario.
-  Widget _construirActividad() {
+  Widget _construirEstadistica() {
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(19),
         border: Border.all(color: DaleColores.borde),
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 23,
-            backgroundColor: DaleColores.verdeLima,
-            child: Icon(Icons.eco_rounded, color: DaleColores.verdeBosque),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: DaleColores.verdeLima.withOpacity(.35),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(
+              Icons.recycling_rounded,
+              color: DaleColores.verdeBosque,
+              size: 25,
+            ),
           ),
-          const SizedBox(width: 14),
-
+          const SizedBox(width: 13),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mis publicaciones',
+                  'Objetos compartidos',
                   style: TextStyle(
                     color: DaleColores.carbon,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
                   ),
                 ),
-                SizedBox(height: 3),
+                SizedBox(height: 4),
                 Text(
-                  'Objetos que has compartido.',
+                  'Cada objeto merece otra oportunidad.',
                   style: TextStyle(color: DaleColores.grisMusgo, fontSize: 11),
                 ),
               ],
             ),
           ),
-
           Text(
             '$_totalPublicaciones',
             style: const TextStyle(
               color: DaleColores.verdeBosque,
-              fontSize: 22,
+              fontSize: 27,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -434,12 +635,48 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  void _mensaje(String mensaje) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensaje)));
+  Widget _construirCerrarSesion() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: _cerrarSesion,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.red.shade100),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.red.shade50,
+                child: Icon(
+                  Icons.logout_rounded,
+                  color: Colors.red.shade600,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 13),
+              const Expanded(
+                child: Text(
+                  'Cerrar sesión',
+                  style: TextStyle(
+                    color: DaleColores.carbon,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Colors.red.shade400),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  // Opciones del perfil.
   Widget _opcion({
     required IconData icono,
     required String titulo,
@@ -448,21 +685,26 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: DaleColores.borde),
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: DaleColores.verdeLima.withOpacity(0.35),
-                child: Icon(icono, color: DaleColores.verdeBosque),
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: DaleColores.verdeLima.withOpacity(.32),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icono, color: DaleColores.verdeBosque, size: 22),
               ),
               const SizedBox(width: 13),
               Expanded(
@@ -473,7 +715,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       titulo,
                       style: const TextStyle(
                         color: DaleColores.carbon,
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -497,5 +739,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
         ),
       ),
     );
+  }
+
+  void _mensaje(String mensaje) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 }

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../widgets/estilo_app.dart';
 import 'publicar_precio_screen.dart';
@@ -18,6 +21,11 @@ class PublicarDatosScreen extends StatefulWidget {
 }
 
 class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
+  static const int _maximoImagenes = 5;
+
+  final ImagePicker _imagePicker = ImagePicker();
+  final List<XFile> _imagenes = [];
+
   String _talla = 'M';
   String _estado = 'Buen estado';
 
@@ -28,6 +36,80 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
   final _caracteristicasController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _numeroSerieController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _recuperarImagenesPerdidas();
+  }
+
+  Future<void> _recuperarImagenesPerdidas() async {
+    final respuesta = await _imagePicker.retrieveLostData();
+
+    if (respuesta.isEmpty || respuesta.files == null || !mounted) return;
+
+    _agregarImagenes(respuesta.files!);
+  }
+
+  Future<void> _seleccionarGaleria() async {
+    final disponibles = _maximoImagenes - _imagenes.length;
+
+    if (disponibles <= 0) {
+      _mostrarMensaje('Puedes agregar como máximo $_maximoImagenes fotos.');
+      return;
+    }
+
+    final seleccionadas = await _imagePicker.pickMultiImage(
+      imageQuality: 82,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
+
+    if (!mounted || seleccionadas.isEmpty) return;
+
+    _agregarImagenes(seleccionadas.take(disponibles).toList());
+
+    if (seleccionadas.length > disponibles) {
+      _mostrarMensaje('Solo se agregaron $disponibles fotos disponibles.');
+    }
+  }
+
+  Future<void> _tomarFoto() async {
+    if (_imagenes.length >= _maximoImagenes) {
+      _mostrarMensaje('Puedes agregar como máximo $_maximoImagenes fotos.');
+      return;
+    }
+
+    final foto = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 82,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      preferredCameraDevice: CameraDevice.rear,
+    );
+
+    if (!mounted || foto == null) return;
+
+    _agregarImagenes([foto]);
+  }
+
+  void _agregarImagenes(List<XFile> nuevas) {
+    final rutasExistentes = _imagenes.map((imagen) => imagen.path).toSet();
+    final disponibles = _maximoImagenes - _imagenes.length;
+
+    final unicas = nuevas
+        .where((imagen) => !rutasExistentes.contains(imagen.path))
+        .take(disponibles)
+        .toList();
+
+    if (unicas.isEmpty) return;
+
+    setState(() => _imagenes.addAll(unicas));
+  }
+
+  void _eliminarImagen(int index) {
+    setState(() => _imagenes.removeAt(index));
+  }
 
   @override
   void dispose() {
@@ -88,6 +170,10 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
           ),
 
           const SizedBox(height: 20),
+
+          _construirSelectorImagenes(),
+
+          const SizedBox(height: 22),
 
           for (final campo in campos) ...[
             _campo(
@@ -246,6 +332,11 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
   void _continuar() {
     final descripcion = _descripcionController.text.trim();
 
+    if (_imagenes.isEmpty) {
+      _mostrarMensaje('Agrega por lo menos una foto del producto.');
+      return;
+    }
+
     if (widget.categoria != 'Bicicletas' &&
         _tituloController.text.trim().isEmpty) {
       _mostrarMensaje('Escribe el nombre del producto.');
@@ -284,6 +375,7 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
           descripcion: descripcion,
           numeroSerie: _numeroSerieController.text.trim(),
           caracteristicas: _caracteristicasController.text.trim(),
+          imagenesTemporales: _imagenes.map((imagen) => imagen.path).toList(),
         ),
       ),
     );
@@ -292,6 +384,139 @@ class _PublicarDatosScreenState extends State<PublicarDatosScreen> {
   void _mostrarMensaje(String mensaje) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
+  Widget _construirSelectorImagenes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Fotos del producto',
+          style: TextStyle(
+            color: DaleColores.carbon,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Roboto',
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'Agrega entre 1 y $_maximoImagenes fotos. La primera será la portada.',
+          style: const TextStyle(
+            color: DaleColores.grisMusgo,
+            fontSize: 12,
+            fontFamily: 'Roboto',
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _seleccionarGaleria,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Galería'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: DaleColores.verdeBosque,
+                  minimumSize: const Size.fromHeight(48),
+                  side: const BorderSide(color: DaleColores.verdeBosque),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _tomarFoto,
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Cámara'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: DaleColores.verdeBosque,
+                  minimumSize: const Size.fromHeight(48),
+                  side: const BorderSide(color: DaleColores.verdeBosque),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_imagenes.isNotEmpty) ...[
+          const SizedBox(height: 13),
+          SizedBox(
+            height: 112,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _imagenes.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.file(
+                        File(_imagenes[index].path),
+                        width: 112,
+                        height: 112,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 112,
+                          height: 112,
+                          color: DaleColores.verdeLima,
+                          child: const Icon(Icons.broken_image_outlined),
+                        ),
+                      ),
+                    ),
+                    if (index == 0)
+                      Positioned(
+                        left: 6,
+                        bottom: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: DaleColores.verdeBosque,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Portada',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: InkWell(
+                        onTap: () => _eliminarImagen(index),
+                        child: const CircleAvatar(
+                          radius: 13,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   List<Map<String, String>> _obtenerCampos() {

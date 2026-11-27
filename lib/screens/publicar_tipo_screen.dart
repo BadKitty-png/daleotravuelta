@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../database/base_datos.dart';
 import '../widgets/estilo_app.dart';
 import 'publicar_datos_screen.dart';
 
@@ -13,15 +14,60 @@ class PublicarTipoScreen extends StatefulWidget {
 class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
   String _modalidad = 'Donar';
 
-  final List<String> _categorias = [
-    'Bicicletas',
-    'Electrónicas',
-    'Muebles',
-    'Ropa',
-    'Otros productos',
-  ];
+  List<String> _categorias = [];
+  String? _categoria;
 
-  String _categoria = 'Bicicletas';
+  bool _cargandoCategorias = true;
+  String? _errorCategorias;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCategorias();
+  }
+
+  // Obtener las categorías activas desde SQLite.
+  Future<void> _cargarCategorias() async {
+    try {
+      final db = await BaseDatos.instance.database;
+
+      final resultado = await db.query(
+        'categorias',
+        columns: ['nombre'],
+        where: 'activa = ?',
+        whereArgs: [1],
+        orderBy: 'nombre COLLATE NOCASE ASC',
+      );
+
+      final categorias = resultado
+          .map((fila) => fila['nombre'].toString())
+          .toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        _categorias = categorias;
+
+        if (_categorias.isNotEmpty) {
+          if (!_categorias.contains(_categoria)) {
+            _categoria = _categorias.first;
+          }
+        } else {
+          _categoria = null;
+        }
+
+        _cargandoCategorias = false;
+        _errorCategorias = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _cargandoCategorias = false;
+        _errorCategorias = 'No se pudieron cargar las categorías.';
+      });
+    }
+  }
 
   Color _colorModalidad(String modalidad) {
     switch (modalidad) {
@@ -104,95 +150,142 @@ class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
           ),
           const SizedBox(height: 10),
 
-          DropdownButtonFormField<String>(
-            initialValue: _categoria,
-            decoration: _decoracion(
-              'Selecciona una categoría',
-              Icons.category_outlined,
-            ),
-            items: _categorias
-                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                .toList(),
-            onChanged: (valor) {
-              if (valor != null) {
-                setState(() => _categoria = valor);
-              }
-            },
-          ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Fotografías',
-            style: TextStyle(
-              color: DaleColores.carbon,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Roboto',
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Agrega al menos 3 fotos para mostrar tu objeto.',
-            style: TextStyle(
-              color: DaleColores.grisMusgo,
-              fontSize: 12,
-              fontFamily: 'Roboto',
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              for (var i = 0; i < 3; i++)
-                Expanded(
-                  child: Container(
-                    margin: EdgeInsets.only(right: i == 2 ? 0 : 9),
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: DaleColores.verdeLima.withOpacity(0.22),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: DaleColores.borde),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.add_a_photo_outlined,
-                          color: DaleColores.verdeBosque,
-                          size: 27,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Foto ${i + 1}',
-                          style: const TextStyle(
-                            color: DaleColores.grisMusgo,
-                            fontSize: 11,
-                            fontFamily: 'Roboto',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          _construirSelectorCategorias(),
 
           const SizedBox(height: 30),
 
           _boton(
             texto: 'Continuar',
             icono: Icons.arrow_forward_rounded,
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => PublicarDatosScreen(
-                    categoria: _categoria,
-                    modalidad: _modalidad,
-                  ),
-                ),
-              );
-            },
+            onPressed: _categoria == null || _cargandoCategorias
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PublicarDatosScreen(
+                          categoria: _categoria!,
+                          modalidad: _modalidad,
+                        ),
+                      ),
+                    );
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Selector conectado a la tabla categorias.
+  Widget _construirSelectorCategorias() {
+    if (_cargandoCategorias) {
+      return Container(
+        height: 58,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: DaleColores.borde),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 19,
+              width: 19,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: DaleColores.verdeBosque,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Cargando categorías...',
+              style: TextStyle(
+                color: DaleColores.grisMusgo,
+                fontFamily: 'Roboto',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_errorCategorias != null) {
+      return _mensajeCategorias(
+        icono: Icons.error_outline_rounded,
+        mensaje: _errorCategorias!,
+        accion: 'Reintentar',
+        onPressed: _cargarCategorias,
+      );
+    }
+
+    if (_categorias.isEmpty) {
+      return _mensajeCategorias(
+        icono: Icons.category_outlined,
+        mensaje: 'No hay categorías disponibles.',
+        accion: 'Actualizar',
+        onPressed: _cargarCategorias,
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey(_categoria),
+      initialValue: _categoria,
+      isExpanded: true,
+      decoration: _decoracion(
+        'Selecciona una categoría',
+        Icons.category_outlined,
+      ),
+      items: _categorias.map((categoria) {
+        return DropdownMenuItem(
+          value: categoria,
+          child: Text(categoria, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (valor) {
+        if (valor != null) {
+          setState(() => _categoria = valor);
+        }
+      },
+    );
+  }
+
+  Widget _mensajeCategorias({
+    required IconData icono,
+    required String mensaje,
+    required String accion,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DaleColores.borde),
+      ),
+      child: Row(
+        children: [
+          Icon(icono, color: DaleColores.verdeBosque),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              mensaje,
+              style: const TextStyle(
+                color: DaleColores.grisMusgo,
+                fontSize: 12,
+                fontFamily: 'Roboto',
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onPressed,
+            child: Text(
+              accion,
+              style: const TextStyle(
+                color: DaleColores.verdeBosque,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -261,7 +354,7 @@ class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: seleccionada ? color.withOpacity(0.09) : Colors.white,
+          color: seleccionada ? color.withValues(alpha: 0.09) : Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: seleccionada ? color : DaleColores.borde,
@@ -274,7 +367,7 @@ class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
               width: 45,
               height: 45,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.13),
+                color: color.withValues(alpha: 0.13),
                 shape: BoxShape.circle,
               ),
               child: Icon(_iconoModalidad(modalidad), color: color),
@@ -328,7 +421,7 @@ class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
   Widget _boton({
     required String texto,
     required IconData icono,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     return SizedBox(
       height: 52,
@@ -347,6 +440,7 @@ class _PublicarTipoScreenState extends State<PublicarTipoScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: DaleColores.verdeBosque,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: DaleColores.grisMusgo.withValues(alpha: 0.3),
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

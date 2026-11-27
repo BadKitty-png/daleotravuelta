@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/sesion.dart';
 import '../screens/login_screen.dart';
 
@@ -6,7 +7,12 @@ import '../screens/login_screen.dart';
 class DashboardScaffold extends StatelessWidget {
   final String titulo;
   final List<Widget> children;
-  const DashboardScaffold({super.key, required this.titulo, required this.children});
+
+  const DashboardScaffold({
+    super.key,
+    required this.titulo,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +33,10 @@ class DashboardScaffold extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Hola, ${Sesion.nombre}',
-              style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            'Hola, ${Sesion.nombre}',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           Text('${Sesion.rol.nombre} · ${Sesion.municipio}'),
           const SizedBox(height: 16),
           ...children,
@@ -42,11 +50,18 @@ class StatCard extends StatelessWidget {
   final IconData icono;
   final String valor;
   final String etiqueta;
-  const StatCard({super.key, required this.icono, required this.valor, required this.etiqueta});
+
+  const StatCard({
+    super.key,
+    required this.icono,
+    required this.valor,
+    required this.etiqueta,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
     return Card(
       color: cs.secondaryContainer,
       child: Padding(
@@ -66,7 +81,8 @@ class StatCard extends StatelessWidget {
 }
 
 /// Fila de dos tarjetas de estadísticas.
-Widget filaStats(List<StatCard> items) {
+/// Acepta cualquier Widget, incluyendo tarjetas interactivas.
+Widget filaStats(List<Widget> items) {
   return Row(
     children: [
       for (var i = 0; i < items.length; i++) ...[
